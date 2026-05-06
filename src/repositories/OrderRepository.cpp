@@ -57,7 +57,36 @@ std::optional<Order> OrderRepository::getById(int id) {
     return std::nullopt;
 }
 
-bool OrderRepository::insert(const Order& order) {
+std::vector<Order> OrderRepository::getByClientId(int clientId) {
+    std::vector<Order> orders;
+    QSqlQuery query;
+    query.prepare("SELECT order_id, client_id, employee_id, status_id, "
+                  "received_date, required_date, completed_date, deposit_amount, payment_status, notes "
+                  "FROM orders WHERE client_id = :cid");
+    query.bindValue(":cid", clientId);
+
+    if (query.exec()) {
+        while (query.next()) {
+            Order o;
+            o.id = query.value(0).toInt();
+            o.clientId = query.value(1).toInt();
+            o.employeeId = query.value(2).toInt();
+            o.statusId = query.value(3).toInt();
+            o.receivedDate = QDate::fromString(query.value(4).toString(), Qt::ISODate);
+            o.requiredDate = QDate::fromString(query.value(5).toString(), Qt::ISODate);
+            if (!query.value(6).isNull()) {
+                o.completedDate = QDate::fromString(query.value(6).toString(), Qt::ISODate);
+            }
+            o.depositAmount = query.value(7).toDouble();
+            o.paymentStatus = query.value(8).toString();
+            o.notes         = query.value(9).toString();
+            orders.push_back(o);
+        }
+    }
+    return orders;
+}
+
+int OrderRepository::insert(const Order& order) {
     QSqlQuery query;
     query.prepare("INSERT INTO orders (client_id, employee_id, status_id, received_date, required_date, completed_date, deposit_amount, payment_status, notes) "
                   "VALUES (:cId, :eId, :sId, :recDate, :reqDate, :compDate, :deposit, :payStatus, :notes)");
@@ -66,22 +95,18 @@ bool OrderRepository::insert(const Order& order) {
     query.bindValue(":sId", order.statusId);
     query.bindValue(":recDate", order.receivedDate.toString(Qt::ISODate));
     query.bindValue(":reqDate", order.requiredDate.toString(Qt::ISODate));
-    
-    if (order.completedDate.isValid()) {
-        query.bindValue(":compDate", order.completedDate.toString(Qt::ISODate));
-    } else {
-        query.bindValue(":compDate", QVariant()); // Записуємо NULL
-    }
-    
+    if (order.completedDate.isValid()) { query.bindValue(":compDate", order.completedDate.toString(Qt::ISODate)); }
+    else { query.bindValue(":compDate", QVariant()); }
     query.bindValue(":deposit", order.depositAmount);
     query.bindValue(":payStatus", order.paymentStatus);
     query.bindValue(":notes", order.notes);
 
     if (!query.exec()) {
         qDebug() << "Помилка створення замовлення:" << query.lastError().text();
-        return false;
+        return -1; // Повертаємо помилку
     }
-    return true;
+    // Ідіоматичний Qt-спосіб отримати ID останнього вставленого запису
+    return query.lastInsertId().toInt();
 }
 
 bool OrderRepository::update(const Order& order) {

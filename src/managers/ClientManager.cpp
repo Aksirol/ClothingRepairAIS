@@ -47,13 +47,6 @@ std::vector<Client> ClientManager::searchClients(const QString& searchQuery) {
 }
 
 std::vector<Order> ClientManager::getClientHistory(int clientId) {
-    std::vector<Order> history;
-    auto allOrders = orderRepo.getAll();
-    
-    for (const auto& order : allOrders) {
-        if (order.clientId == clientId) {
-            history.push_back(order);
-        }
-    }
-    return history;
+    // Тепер запит виконується на рівні БД! Швидко і ефективно.
+    return orderRepo.getByClientId(clientId);
 }

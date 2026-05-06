@@ -51,9 +51,10 @@ set(PROJECT_SOURCES
         src/managers/ClientManager.h
         src/managers/ReportBuilder.cpp
         src/managers/ReportBuilder.h
+        src/models/OrderStatusIds.h
 )
 
-include_directories(src/models src/repositories)
+include_directories(src/models src/repositories src/managers)
 
 # Створюємо виконувальний файл
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
