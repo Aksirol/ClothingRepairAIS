@@ -45,6 +45,12 @@ set(PROJECT_SOURCES
         src/models/RepairService.h
         src/repositories/RepairServiceRepository.cpp
         src/repositories/RepairServiceRepository.h
+        src/managers/OrderManager.cpp
+        src/managers/OrderManager.h
+        src/managers/ClientManager.cpp
+        src/managers/ClientManager.h
+        src/managers/ReportBuilder.cpp
+        src/managers/ReportBuilder.h
 )
 
 include_directories(src/models src/repositories)
