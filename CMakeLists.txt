@@ -18,6 +18,9 @@ find_package(Qt6 COMPONENTS Core Gui Widgets Sql REQUIRED)
 # Збираємо всі початкові файли (поки що лише main.cpp)
 set(PROJECT_SOURCES
         main.cpp
+        DatabaseManager.cpp
+        DatabaseManager.h
+        resources.qrc
 )
 
 # Створюємо виконувальний файл

@@ -1,21 +1,22 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QDebug>
+#include "DatabaseManager.h" // Підключаємо наш менеджер
 
 int main(int argc, char *argv[]) {
-    // QApplication керує загальними налаштуваннями додатку та подіями
     QApplication app(argc, argv);
 
-    // Створюємо головне вікно
+    // Ініціалізуємо базу даних
+    if (!DatabaseManager::instance().init()) {
+        qCritical() << "Критична помилка: не вдалося ініціалізувати базу даних!";
+        return -1; // Зупиняємо програму, якщо база не працює
+    }
+
     QMainWindow mainWindow;
     mainWindow.setWindowTitle("АІС: Ремонт одягу");
     mainWindow.resize(800, 600);
 
-    qDebug() << "Додаток успішно запущено!";
-
-    // Показуємо вікно на екрані
     mainWindow.show();
 
-    // Запускаємо головний цикл обробки подій
     return app.exec();
 }
