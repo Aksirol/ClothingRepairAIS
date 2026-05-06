@@ -21,10 +21,33 @@ set(PROJECT_SOURCES
         DatabaseManager.cpp
         DatabaseManager.h
         resources.qrc
+        src/models/Position.h
+        src/repositories/PositionRepository.h
+        src/repositories/PositionRepository.cpp
+        src/models/Employee.h
+        src/repositories/EmployeeRepository.cpp
+        src/models/RepairCategory.h
+        src/repositories/RepairCategoryRepository.cpp
+        src/repositories/RepairCategoryRepository.h
+        src/models/OrderStatus.h
+        src/repositories/OrderStatusRepository.cpp
+        src/repositories/OrderStatusRepository.h
+        src/models/Client.h
+        src/repositories/ClientRepository.cpp
+        src/repositories/ClientRepository.h
+        src/models/Order.h
+        src/repositories/OrderRepository.cpp
+        src/repositories/OrderRepository.h
+        src/models/OrderItem.h
+        src/repositories/OrderItemRepository.cpp
+        src/repositories/OrderItemRepository.h
+        src/repositories/EmployeeRepository.h
 )
 
+include_directories(src/models src/repositories)
+
 # Створюємо виконувальний файл
-add_executable(${PROJECT_NAME} WIN32 ${PROJECT_SOURCES})
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 # Підключаємо бібліотеки Qt до нашого проекту
 target_link_libraries(${PROJECT_NAME} PRIVATE

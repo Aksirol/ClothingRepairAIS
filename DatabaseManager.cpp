@@ -13,7 +13,7 @@ DatabaseManager& DatabaseManager::instance() {
 }
 
 DatabaseManager::~DatabaseManager() {
-    close();
+
 }
 
 bool DatabaseManager::init() {
