@@ -68,11 +68,12 @@ CREATE TABLE IF NOT EXISTS orders (
                                       required_date TEXT NOT NULL,
                                       completed_date TEXT,
                                       deposit_amount REAL DEFAULT 0.0,
+                                      payment_status TEXT DEFAULT 'Неоплачено', -- ДОДАНО ОСЬ ЦЕ
                                       notes TEXT,
                                       FOREIGN KEY (client_id) REFERENCES clients (client_id) ON DELETE RESTRICT,
-    FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE RESTRICT,
-    FOREIGN KEY (status_id) REFERENCES order_statuses (status_id) ON DELETE RESTRICT
-    );
+                                      FOREIGN KEY (employee_id) REFERENCES employees (employee_id) ON DELETE RESTRICT,
+                                      FOREIGN KEY (status_id) REFERENCES order_statuses (status_id) ON DELETE RESTRICT
+);
 
 CREATE TABLE IF NOT EXISTS order_items (
                                            item_id INTEGER PRIMARY KEY AUTOINCREMENT,

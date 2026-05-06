@@ -7,7 +7,7 @@
 std::vector<Order> OrderRepository::getAll() {
     std::vector<Order> orders;
     QSqlQuery query("SELECT order_id, client_id, employee_id, status_id, "
-                    "received_date, required_date, completed_date, deposit_amount, notes FROM orders");
+                    "received_date, required_date, completed_date, deposit_amount, payment_status, notes FROM orders");
 
     while (query.next()) {
         Order o;
@@ -33,7 +33,7 @@ std::vector<Order> OrderRepository::getAll() {
 std::optional<Order> OrderRepository::getById(int id) {
     QSqlQuery query;
     query.prepare("SELECT order_id, client_id, employee_id, status_id, "
-                  "received_date, required_date, completed_date, deposit_amount, notes "
+                  "received_date, required_date, completed_date, deposit_amount, payment_status, notes "
                   "FROM orders WHERE order_id = :id");
     query.bindValue(":id", id);
 
@@ -57,8 +57,8 @@ std::optional<Order> OrderRepository::getById(int id) {
 
 bool OrderRepository::insert(const Order& order) {
     QSqlQuery query;
-    query.prepare("INSERT INTO orders (client_id, employee_id, status_id, received_date, required_date, completed_date, deposit_amount, notes) "
-                  "VALUES (:cId, :eId, :sId, :recDate, :reqDate, :compDate, :deposit, :notes)");
+    query.prepare("INSERT INTO orders (client_id, employee_id, status_id, received_date, required_date, completed_date, deposit_amount, payment_status, notes) "
+                  "VALUES (:cId, :eId, :sId, :recDate, :reqDate, :compDate, :deposit, :payStatus, :notes)");
     query.bindValue(":cId", order.clientId);
     query.bindValue(":eId", order.employeeId);
     query.bindValue(":sId", order.statusId);
@@ -72,6 +72,7 @@ bool OrderRepository::insert(const Order& order) {
     }
     
     query.bindValue(":deposit", order.depositAmount);
+    query.bindValue(":payStatus", order.paymentStatus);
     query.bindValue(":notes", order.notes);
 
     if (!query.exec()) {
@@ -85,7 +86,7 @@ bool OrderRepository::update(const Order& order) {
     QSqlQuery query;
     query.prepare("UPDATE orders SET client_id = :cId, employee_id = :eId, status_id = :sId, "
                   "received_date = :recDate, required_date = :reqDate, completed_date = :compDate, "
-                  "deposit_amount = :deposit, notes = :notes WHERE order_id = :id");
+                  "deposit_amount = :deposit, payment_status = :payStatus, notes = :notes WHERE order_id = :id");
     query.bindValue(":cId", order.clientId);
     query.bindValue(":eId", order.employeeId);
     query.bindValue(":sId", order.statusId);
@@ -99,6 +100,7 @@ bool OrderRepository::update(const Order& order) {
     }
     
     query.bindValue(":deposit", order.depositAmount);
+    query.bindValue(":payStatus", order.paymentStatus);
     query.bindValue(":notes", order.notes);
     query.bindValue(":id", order.id);
 
