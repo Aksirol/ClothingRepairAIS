@@ -44,4 +44,26 @@ bool PositionRepository::deleteById(int id) {
     return true;
 }
 
-// Методи getById та update реалізуються за таким же принципом...
+std::optional<Position> PositionRepository::getById(int id) {
+    QSqlQuery query;
+    query.prepare("SELECT position_id, position_name, hourly_rate FROM positions WHERE position_id = :id");
+    query.bindValue(":id", id);
+
+    if (query.exec() && query.next()) {
+        Position p;
+        p.id = query.value(0).toInt();
+        p.name = query.value(1).toString();
+        p.hourlyRate = query.value(2).toDouble();
+        return p;
+    }
+    return std::nullopt;
+}
+
+bool PositionRepository::update(const Position& position) {
+    QSqlQuery query;
+    query.prepare("UPDATE positions SET position_name = :name, hourly_rate = :rate WHERE position_id = :id");
+    query.bindValue(":name", position.name);
+    query.bindValue(":rate", position.hourlyRate);
+    query.bindValue(":id", position.id);
+    return query.exec();
+}

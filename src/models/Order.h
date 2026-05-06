@@ -13,6 +13,7 @@ struct Order {
     QDate requiredDate;
     QDate completedDate; // Може бути недійсною (invalid), якщо замовлення ще не виконано
     double depositAmount = 0.0;
+    QString paymentStatus = "Неоплачено"; // Додано
     QString notes;
 };
 

@@ -66,8 +66,14 @@ void runCrudTests() {
                    "VALUES (1, 1, 'Майстер', 'Тест', '000', '2023-01-01')");
 
     // Створюємо замовлення, прив'язане до нашого тестового клієнта
-    Order testOrder{-1, testClientId, 1, 1, QDate::currentDate(), QDate::currentDate().addDays(2), QDate(), 50.0, "Тестове замовлення"};
-    orderRepo.insert(testOrder);
+    Order testOrder;
+    testOrder.clientId     = testClientId;
+    testOrder.employeeId   = 1;
+    testOrder.statusId     = 1;
+    testOrder.receivedDate = QDate::currentDate();
+    testOrder.requiredDate = QDate::currentDate().addDays(2);
+    testOrder.depositAmount = 50.0;
+    testOrder.notes        = "Тестове замовлення";
 
     qDebug() << "[*] Спроба видалити клієнта, у якого є активне замовлення...";
     if (!clientRepo.deleteById(testClientId)) {

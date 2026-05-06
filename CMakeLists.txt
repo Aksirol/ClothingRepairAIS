@@ -42,6 +42,9 @@ set(PROJECT_SOURCES
         src/repositories/OrderItemRepository.cpp
         src/repositories/OrderItemRepository.h
         src/repositories/EmployeeRepository.h
+        src/models/RepairService.h
+        src/repositories/RepairServiceRepository.cpp
+        src/repositories/RepairServiceRepository.h
 )
 
 include_directories(src/models src/repositories)

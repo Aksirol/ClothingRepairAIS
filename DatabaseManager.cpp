@@ -6,6 +6,8 @@
 #include <QTextStream>
 #include <QDebug>
 #include <QDir>
+#include <QStandardPaths>
+#include <QFileInfo>
 
 DatabaseManager& DatabaseManager::instance() {
     static DatabaseManager instance;
@@ -17,11 +19,21 @@ DatabaseManager::~DatabaseManager() {
 }
 
 bool DatabaseManager::init() {
-    // 1. Формуємо шлях: папка з .exe + repairs.db
-    QString dbPath = QCoreApplication::applicationDirPath() + QDir::separator() + "repairs.db";
+    QString appDir = QCoreApplication::applicationDirPath();
+    QString dbPath = appDir + QDir::separator() + "repairs.db";
+
+    // Перевіряємо, чи маємо ми право писати в папку поруч з .exe
+    QFileInfo appDirInfo(appDir);
+    if (!appDirInfo.isWritable()) {
+        qWarning() << "Папка додатку недоступна для запису. Використовуємо AppData.";
+        // Шлях: C:\Users\Username\AppData\Local\ClothingRepairAIS\repairs.db
+        QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+        QDir().mkpath(dataDir); // Створюємо папку, якщо її немає
+        dbPath = dataDir + QDir::separator() + "repairs.db";
+    }
+
     qDebug() << "Шлях до бази даних:" << dbPath;
 
-    // 2. Створюємо підключення
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(dbPath);
 
@@ -30,13 +42,9 @@ bool DatabaseManager::init() {
         return false;
     }
 
-    // 3. Увімкнення підтримки зовнішніх ключів (дуже важливо для SQLite)
     QSqlQuery pragmaQuery(db);
-    if (!pragmaQuery.exec("PRAGMA foreign_keys = ON;")) {
-        qWarning() << "Не вдалося увімкнути PRAGMA foreign_keys:" << pragmaQuery.lastError().text();
-    }
+    pragmaQuery.exec("PRAGMA foreign_keys = ON;");
 
-    // 4. Перевіряємо, чи база пуста (шукаємо таблицю db_version)
     if (!db.tables().contains("db_version")) {
         qDebug() << "База даних порожня. Запускаємо міграцію схеми...";
         if (!executeSchema()) {

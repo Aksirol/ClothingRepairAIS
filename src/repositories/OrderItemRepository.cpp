@@ -7,7 +7,18 @@
 std::vector<OrderItem> OrderItemRepository::getAll() {
     std::vector<OrderItem> items;
     QSqlQuery query("SELECT item_id, order_id, service_id, quantity, unit_price, clothing_description, item_notes FROM order_items");
-    // Логіка зчитування (аналогічно до getById нижче) ...
+
+    while (query.next()) {
+        OrderItem i;
+        i.id = query.value(0).toInt();
+        i.orderId = query.value(1).toInt();
+        i.serviceId = query.value(2).toInt();
+        i.quantity = query.value(3).toInt();
+        i.unitPrice = query.value(4).toDouble();
+        i.clothingDescription = query.value(5).toString();
+        i.itemNotes = query.value(6).toString();
+        items.push_back(i);
+    }
     return items;
 }
 
