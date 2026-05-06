@@ -16,42 +16,49 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt6 COMPONENTS Core Gui Widgets Sql REQUIRED)
 
 # Збираємо всі початкові файли (поки що лише main.cpp)
+# Збираємо всі початкові файли
 set(PROJECT_SOURCES
         main.cpp
         DatabaseManager.cpp
         DatabaseManager.h
         resources.qrc
+
+        # Models
+        src/models/OrderStatusIds.h
         src/models/Position.h
-        src/repositories/PositionRepository.h
-        src/repositories/PositionRepository.cpp
         src/models/Employee.h
-        src/repositories/EmployeeRepository.cpp
         src/models/RepairCategory.h
+        src/models/RepairService.h
+        src/models/OrderStatus.h
+        src/models/Client.h
+        src/models/Order.h
+        src/models/OrderItem.h
+
+        # Repositories
+        src/repositories/PositionRepository.cpp
+        src/repositories/PositionRepository.h
+        src/repositories/EmployeeRepository.cpp
+        src/repositories/EmployeeRepository.h
         src/repositories/RepairCategoryRepository.cpp
         src/repositories/RepairCategoryRepository.h
-        src/models/OrderStatus.h
-        src/repositories/OrderStatusRepository.cpp
-        src/repositories/OrderStatusRepository.h
-        src/models/Client.h
-        src/repositories/ClientRepository.cpp
-        src/repositories/ClientRepository.h
-        src/models/Order.h
-        src/repositories/OrderRepository.cpp
-        src/repositories/OrderRepository.h
-        src/models/OrderItem.h
-        src/repositories/OrderItemRepository.cpp
-        src/repositories/OrderItemRepository.h
-        src/repositories/EmployeeRepository.h
-        src/models/RepairService.h
         src/repositories/RepairServiceRepository.cpp
         src/repositories/RepairServiceRepository.h
+        src/repositories/OrderStatusRepository.cpp
+        src/repositories/OrderStatusRepository.h
+        src/repositories/ClientRepository.cpp
+        src/repositories/ClientRepository.h
+        src/repositories/OrderRepository.cpp
+        src/repositories/OrderRepository.h
+        src/repositories/OrderItemRepository.cpp
+        src/repositories/OrderItemRepository.h
+
+        # Managers
         src/managers/OrderManager.cpp
         src/managers/OrderManager.h
         src/managers/ClientManager.cpp
         src/managers/ClientManager.h
         src/managers/ReportBuilder.cpp
         src/managers/ReportBuilder.h
-        src/models/OrderStatusIds.h
 )
 
 include_directories(src/models src/repositories src/managers)

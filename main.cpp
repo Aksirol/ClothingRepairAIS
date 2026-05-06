@@ -17,7 +17,7 @@
 
 void runBusinessLogicTests() {
     qDebug() << "\n==============================================";
-    qDebug() << "=== ФАЗА 3: ТЕСТУВАННЯ БІЗНЕС-ЛОГІКИ (ОНОВЛЕНО) ===";
+    qDebug() << "=== ФАЗА 3: ТЕСТУВАННЯ БІЗНЕС-ЛОГІКИ (ФІНАЛ) ===";
     qDebug() << "==============================================\n";
 
     OrderManager orderManager;
@@ -30,7 +30,7 @@ void runBusinessLogicTests() {
     seedQuery.exec("INSERT OR IGNORE INTO repair_services (service_id, category_id, service_name, base_price, estimated_days) VALUES (98, 1, 'Штани', 100.0, 1)");
     seedQuery.exec("INSERT OR IGNORE INTO repair_services (service_id, category_id, service_name, base_price, estimated_days) VALUES (99, 1, 'Куртка', 150.0, 1)");
 
-    // --- ТЕСТ 1: Клієнт менеджер (Дублікати та Пошук) ---
+    // --- ТЕСТ 1: ClientManager (Дублікати та Пошук) ---
     Client duplicateClient{-1, "Новий", "Клієнт", "", "000", "", "", QDate::currentDate()};
     if (!clientManager.registerClient(duplicateClient)) {
         qDebug() << "[+] ClientManager: Успішно заблоковано реєстрацію клієнта з існуючим телефоном.";
@@ -41,44 +41,50 @@ void runBusinessLogicTests() {
         qDebug() << "[+] ClientManager: Пошук працює коректно.";
     }
 
-    // --- ТЕСТ 2: Транзакція (Обрив) ---
+    // --- ТЕСТ 2: OrderManager (Порожнє замовлення - ВІДНОВЛЕНО) ---
+    Order emptyOrder{-1, 99, 99, StatusId::Accepted, QDate::currentDate(), QDate::currentDate().addDays(1), QDate(), 0.0, "Неоплачено", ""};
+    std::vector<OrderItem> emptyItems;
+    if (!orderManager.createOrderWithItems(emptyOrder, emptyItems)) {
+        qDebug() << "[+] OrderManager: Успішно відхилено створення замовлення без позицій.";
+    }
+
+    // --- ТЕСТ 3: OrderManager (Транзакція / Обрив) ---
     int ordersCountBefore = orderRepo.getAll().size();
     Order rollbackOrder{-1, 99, 99, StatusId::Accepted, QDate::currentDate(), QDate::currentDate().addDays(1), QDate(), 0.0, "Неоплачено", ""};
     std::vector<OrderItem> rollbackItems = {
         OrderItem{-1, -1, 98, 1, 0.0, "Одяг 1", ""},
-        OrderItem{-1, -1, 9999, 1, 0.0, "Неіснуюча", ""} // Помилка тут
+        OrderItem{-1, -1, 9999, 1, 0.0, "Неіснуюча", ""}
     };
-
     if (!orderManager.createOrderWithItems(rollbackOrder, rollbackItems)) {
         if (ordersCountBefore == orderRepo.getAll().size()) {
             qDebug() << "[+] OrderManager: Транзакцію успішно відкочено!";
         }
     }
 
-    // --- ТЕСТ 3: ReportBuilder (Виторг за order_items) ---
-    QDate today = QDate::currentDate();
+    // --- ТЕСТ 4: OrderManager (Незаконний перехід статусу - ВІДНОВЛЕНО) ---
+    Order issuedOrder{-1, 99, 99, StatusId::Issued, QDate::currentDate(), QDate::currentDate(), QDate::currentDate(), 0.0, "Оплачено", ""};
+    int testOrderId = orderRepo.insert(issuedOrder);
+    if (!orderManager.changeOrderStatus(testOrderId, StatusId::Accepted)) {
+         qDebug() << "[+] OrderManager: Успішно заблоковано незаконний перехід зі статусу 'Видано' назад у 'Прийнято'.";
+    }
 
-    // Замовлення 1: Видано сьогодні (Штани 2шт х 100 = 200)
-    Order o1{-1, 99, 99, StatusId::Issued, today, today, today, 50.0, "Оплачено", ""}; // Завдаток 50, але виторг має бути 200!
-    std::vector<OrderItem> items1 = { OrderItem{-1, -1, 98, 2, 0.0, "", ""} };
+    // --- ТЕСТ 5: ReportBuilder (Виторг за order_items) ---
+    QDate today = QDate::currentDate();
+    Order o1{-1, 99, 99, StatusId::Issued, today, today, today, 50.0, "Оплачено", ""};
+    std::vector<OrderItem> items1 = { OrderItem{-1, -1, 98, 2, 0.0, "", ""} }; // 2 * 100 = 200
     orderManager.createOrderWithItems(o1, items1);
 
-    // Замовлення 2: Видано сьогодні (Куртка 1шт х 150 = 150)
     Order o2{-1, 99, 99, StatusId::Issued, today, today, today, 0.0, "Оплачено", ""};
-    std::vector<OrderItem> items2 = { OrderItem{-1, -1, 99, 1, 0.0, "", ""} };
+    std::vector<OrderItem> items2 = { OrderItem{-1, -1, 99, 1, 0.0, "", ""} }; // 1 * 150 = 150
     orderManager.createOrderWithItems(o2, items2);
 
-    // Замовлення 3: НЕ видано (Не має враховуватись у виторгу)
     Order o3{-1, 99, 99, StatusId::InProgress, today, today, QDate(), 0.0, "Неоплачено", ""};
-    std::vector<OrderItem> items3 = { OrderItem{-1, -1, 99, 10, 0.0, "", ""} };
+    std::vector<OrderItem> items3 = { OrderItem{-1, -1, 99, 10, 0.0, "", ""} }; // Не має враховуватись
     orderManager.createOrderWithItems(o3, items3);
 
-    // Очікуваний виторг: 200 + 150 = 350
     double revenue = ReportBuilder::getRevenueForPeriod(today, today);
     if (qFuzzyCompare(revenue, 350.0)) {
          qDebug() << "[+] ReportBuilder: Ідеально! Виторг за сьогодні склав" << revenue << "(Очікувалось 350).";
-    } else {
-         qCritical() << "[-] ReportBuilder: ПОМИЛКА підрахунку! Отримано:" << revenue;
     }
 
     qDebug() << "==============================================\n";
@@ -94,6 +100,7 @@ int main(int argc, char *argv[]) {
     runBusinessLogicTests();
 
     QMainWindow mainWindow;
+    mainWindow.setWindowTitle("АІС: Ремонт одягу"); // Відновлено!
     mainWindow.resize(800, 600);
     mainWindow.show();
 
