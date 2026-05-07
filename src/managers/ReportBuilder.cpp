@@ -9,7 +9,7 @@ QList<QVariantMap> ReportBuilder::getActiveOrders() {
     QList<QVariantMap> report;
     QSqlQuery query;
     query.prepare("SELECT o.order_id, c.last_name || ' ' || c.first_name AS client_name, "
-                  "e.last_name AS master_name, s.status_name, o.required_date "
+                  "e.last_name || ' ' || e.first_name AS master_name, s.status_name, o.required_date "
                   "FROM orders o "
                   "JOIN clients c ON o.client_id = c.client_id "
                   "JOIN employees e ON o.employee_id = e.employee_id "
@@ -35,7 +35,7 @@ QList<QVariantMap> ReportBuilder::getActiveOrders() {
 QList<QVariantMap> ReportBuilder::getOverdueOrders() {
     QList<QVariantMap> report;
     QSqlQuery query;
-    query.prepare("SELECT o.order_id, c.last_name, o.required_date, s.status_name "
+    query.prepare("SELECT o.order_id, c.last_name || ' ' || c.first_name AS client_name, o.required_date, s.status_name "
                   "FROM orders o "
                   "JOIN clients c ON o.client_id = c.client_id "
                   "JOIN order_statuses s ON o.status_id = s.status_id "
