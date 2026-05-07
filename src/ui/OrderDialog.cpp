@@ -73,7 +73,7 @@ void OrderDialog::setupUi() {
     itemsLayout->addLayout(itemsToolbar);
 
     itemsTable = new QTableView(this);
-    itemsModel = new QStandardItemModel(0, 5, this);
+    itemsModel = new QStandardItemModel(0, 6, this);
     itemsModel->setHorizontalHeaderLabels({"Service ID", "Послуга", "Опис", "Кіл-сть", "Ціна (грн)", "Сума (грн)"});
     itemsTable->setModel(itemsModel);
     itemsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -94,7 +94,7 @@ void OrderDialog::setupUi() {
     mainLayout->addWidget(buttons);
 
     // Підключення сигналів
-    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::accepted, this, &OrderDialog::onSaveClicked);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     connect(btnAddClient, &QPushButton::clicked, this, &OrderDialog::onAddClientClicked);
     connect(btnAddItem, &QPushButton::clicked, this, &OrderDialog::onAddItemClicked);
@@ -130,6 +130,14 @@ void OrderDialog::onRemoveItemClicked() {
         itemsModel->removeRow(idx.row());
         calculateTotal();
     }
+}
+
+void OrderDialog::onSaveClicked() {
+    if (requiredDateEdit->date() < receivedDateEdit->date()) {
+        QMessageBox::warning(this, "Помилка валідації", "Дата орієнтовної видачі не може бути раніше дати прийому!");
+        return;
+    }
+    accept(); // Якщо все добре - закриваємо вікно з результатом Accepted
 }
 
 void OrderDialog::calculateTotal() {

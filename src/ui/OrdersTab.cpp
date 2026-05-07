@@ -3,6 +3,7 @@
 #include "OrderStatusIds.h"
 #include "OrderManager.h"
 #include "OrderDialog.h"
+#include "OrderRepository.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -71,18 +72,17 @@ void OrdersTab::setupModel() {
     
     proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(model);
-    proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    proxyModel->setFilterKeyColumn(-1); // Пошук скрізь
+    // Прибираємо setFilterKeyColumn і setFilterRegularExpression звідси!
 
     tableView->setModel(proxyModel);
-    
     refreshData();
 }
 
 void OrdersTab::refreshData() {
-    QSqlQuery query;
-    // Отримуємо зведені дані. Зверни увагу на логіку обчислення row_color!
-    query.prepare(
+    QString status = statusFilterCombo->currentData().toString();
+    QString search = searchEdit->text().trimmed();
+
+    QString queryString =
         "SELECT "
         "  o.order_id AS 'Номер', "
         "  c.last_name || ' ' || c.first_name AS 'Клієнт', "
@@ -93,45 +93,66 @@ void OrdersTab::refreshData() {
         "  o.deposit_amount AS 'Завдаток', "
         "  o.payment_status AS 'Оплата', "
         "  CASE "
-        "    WHEN o.required_date < :today AND o.status_id NOT IN (:issued, :cancelled) THEN '#FF0000' " // Червоний для прострочених
-        "    ELSE s.color_code " // Стандартний колір з БД
+        "    WHEN o.required_date < :today AND o.status_id NOT IN (:issued, :cancelled) THEN '#FF0000' "
+        "    ELSE s.color_code "
         "  END AS row_color "
         "FROM orders o "
         "JOIN clients c ON o.client_id = c.client_id "
         "JOIN employees e ON o.employee_id = e.employee_id "
-        "JOIN order_statuses s ON o.status_id = s.status_id"
-    );
-    
+        "JOIN order_statuses s ON o.status_id = s.status_id "
+        "WHERE 1=1 "; // Базова умова для легкого приєднання AND
+
+    // Динамічне додавання фільтрів до SQL
+    if (!status.isEmpty()) {
+        queryString += " AND s.status_name = :status ";
+    }
+    if (!search.isEmpty()) {
+        queryString += " AND (CAST(o.order_id AS TEXT) LIKE :search OR c.last_name LIKE :search) ";
+    }
+
+    QSqlQuery query;
+    query.prepare(queryString);
     query.bindValue(":today", QDate::currentDate().toString(Qt::ISODate));
     query.bindValue(":issued", StatusId::Issued);
     query.bindValue(":cancelled", StatusId::Cancelled);
+
+    if (!status.isEmpty()) query.bindValue(":status", status);
+    if (!search.isEmpty()) query.bindValue(":search", "%" + search + "%");
+
     query.exec();
-
-    model->setQuery(query); // Передаємо виконаний запит у модель
-
-    // Приховуємо технічну колонку з кольором
+    model->setQuery(query);
     tableView->hideColumn(colorColumnIndex);
 }
 
 void OrdersTab::showEvent(QShowEvent *event) {
     QWidget::showEvent(event);
-    refreshData(); // Завжди свіжі дані при відкритті вкладки
+
+    // Зберігаємо поточний вибраний статус, щоб він не скидався при оновленні
+    QString currentStatus = statusFilterCombo->currentData().toString();
+
+    // Оновлюємо список статусів з БД
+    statusFilterCombo->blockSignals(true); // Блокуємо сигнали, щоб не викликати refreshData() 10 разів
+    statusFilterCombo->clear();
+    statusFilterCombo->addItem("Всі статуси", "");
+    QSqlQuery sq("SELECT status_name FROM order_statuses ORDER BY status_id");
+    while(sq.next()) {
+        statusFilterCombo->addItem(sq.value(0).toString(), sq.value(0).toString());
+    }
+
+    // Відновлюємо вибір
+    int idx = statusFilterCombo->findData(currentStatus);
+    if (idx >= 0) statusFilterCombo->setCurrentIndex(idx);
+    statusFilterCombo->blockSignals(false);
+
+    refreshData();
 }
 
 void OrdersTab::onSearchTextChanged(const QString &text) {
-    // QSortFilterProxyModel сам вміє фільтрувати по тексту
-    proxyModel->setFilterRegularExpression(text);
+    refreshData(); // Фільтрує тепер SQL
 }
 
 void OrdersTab::onStatusFilterChanged(int index) {
-    // Якщо вибрано "Всі статуси", скидаємо фільтр. Інакше шукаємо точний збіг назви статусу.
-    QString status = statusFilterCombo->currentData().toString();
-    if (status.isEmpty()) {
-        proxyModel->setFilterRegularExpression("");
-    } else {
-        proxyModel->setFilterKeyColumn(3); // Колонка 'Статус'
-        proxyModel->setFilterRegularExpression("^" + status + "$"); // Точний збіг
-    }
+    refreshData(); // Фільтрує тепер SQL
 }
 
 // Заглушки для Під-етапів 7.2 та 7.3
@@ -166,5 +187,25 @@ void OrdersTab::onEditOrderClicked() {
 }
 
 void OrdersTab::onDeleteOrderClicked() {
-    QMessageBox::information(this, "Видалення", "Виклик OrderRepository::deleteById(id)");
+    QModelIndex proxyIndex = tableView->currentIndex();
+    if (!proxyIndex.isValid()) {
+        QMessageBox::warning(this, "Увага", "Виберіть замовлення для видалення.");
+        return;
+    }
+
+    int row = proxyModel->mapToSource(proxyIndex).row();
+    int orderId = model->index(row, 0).data().toInt();
+
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Підтвердження",
+        "Ви впевнені, що хочете видалити це замовлення? Усі його послуги будуть також видалені.",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        OrderRepository repo;
+        if (repo.deleteById(orderId)) {
+            refreshData();
+        } else {
+            QMessageBox::critical(this, "Помилка", "Не вдалося видалити замовлення.");
+        }
+    }
 }

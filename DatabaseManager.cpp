@@ -46,12 +46,34 @@ bool DatabaseManager::init() {
     pragmaQuery.exec("PRAGMA foreign_keys = ON;");
 
     if (!db.tables().contains("db_version")) {
-        qDebug() << "База даних порожня. Запускаємо міграцію схеми...";
+        qDebug() << "База даних порожня. Запускаємо створення схеми...";
         if (!executeSchema()) {
             return false;
         }
     } else {
-        qDebug() << "База даних вже існує. Міграція не потрібна.";
+        // --- БЛОК МІГРАЦІЙ ---
+        QSqlQuery vQuery("SELECT MAX(version) FROM db_version");
+        if (vQuery.next()) {
+            int currentVersion = vQuery.value(0).toInt();
+
+            if (currentVersion == 1) {
+                qDebug() << "Виконується міграція бази даних з версії 1 до 2...";
+                db.transaction();
+                QSqlQuery mQuery;
+                // Додаємо колонку
+                if (!mQuery.exec("ALTER TABLE order_statuses ADD COLUMN is_system INTEGER DEFAULT 0")) {
+                    qCritical() << "Помилка міграції (ALTER TABLE):" << mQuery.lastError().text();
+                    db.rollback();
+                    return false;
+                }
+                // Оновлюємо системні статуси (ID 1-5)
+                mQuery.exec("UPDATE order_statuses SET is_system = 1 WHERE status_id <= 5");
+                // Піднімаємо версію
+                mQuery.exec("INSERT INTO db_version (version) VALUES (2)");
+                db.commit();
+                qDebug() << "Міграція успішно завершена!";
+            }
+        }
     }
 
     return true;

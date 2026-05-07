@@ -26,6 +26,7 @@ private slots:
     void onAddClientClicked();
     void onAddItemClicked();
     void onRemoveItemClicked();
+    void onSaveClicked();
 
 private:
     void setupUi();
