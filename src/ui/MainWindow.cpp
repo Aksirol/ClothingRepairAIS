@@ -2,6 +2,7 @@
 #include "ReferencesTab.h"
 #include "ClientsTab.h"
 #include "ServicesTab.h"
+#include "OrdersTab.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -76,22 +77,19 @@ void MainWindow::setupUi() {
 }
 
 void MainWindow::createPages() {
-    // 0. Замовлення (Заглушка)
-    stackedWidget->addWidget(createDummyPage("Управління замовленнями"));
+    // 0. Замовлення
+    stackedWidget->addWidget(new OrdersTab(this));
 
-    ServicesTab *servicesTab = new ServicesTab(this);
-    stackedWidget->addWidget(servicesTab);
-
+    // 1. Клієнти
     stackedWidget->addWidget(new ClientsTab(this));
 
-    // 2. Послуги (Заглушка)
-    stackedWidget->addWidget(createDummyPage("Каталог послуг"));
+    // 2. Послуги
+    stackedWidget->addWidget(new ServicesTab(this));
 
     // 3. Довідники (Контейнер з вкладками)
-    ReferencesTab *referencesTab = new ReferencesTab(this);
-    stackedWidget->addWidget(referencesTab);
+    stackedWidget->addWidget(new ReferencesTab(this));
 
-    // 4. Звіти (Заглушка)
+    // 4. Звіти (Поки що залишаємо заглушку)
     stackedWidget->addWidget(createDummyPage("Звіти та Аналітика"));
 }
 

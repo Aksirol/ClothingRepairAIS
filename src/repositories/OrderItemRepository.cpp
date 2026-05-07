@@ -66,16 +66,14 @@ std::optional<OrderItem> OrderItemRepository::getById(int id) {
 }
 
 bool OrderItemRepository::insert(OrderItem& item) {
-    // 1. АВТОМАТИЧНИЙ РОЗРАХУНОК: Беремо актуальну ціну з довідника послуг
-    QSqlQuery priceQuery;
-    priceQuery.prepare("SELECT base_price FROM repair_services WHERE service_id = :sId");
-    priceQuery.bindValue(":sId", item.serviceId);
-    
-    if (priceQuery.exec() && priceQuery.next()) {
-        item.unitPrice = priceQuery.value(0).toDouble(); // Копіюємо історичну ціну в об'єкт
-    } else {
-        qCritical() << "Помилка: неможливо знайти послугу з ID" << item.serviceId;
-        return false; 
+    // Якщо ціна не була встановлена вручну в UI, підтягуємо базову
+    if (item.unitPrice <= 0.0) {
+        QSqlQuery priceQuery;
+        priceQuery.prepare("SELECT base_price FROM repair_services WHERE service_id = :sId");
+        priceQuery.bindValue(":sId", item.serviceId);
+        if (priceQuery.exec() && priceQuery.next()) {
+            item.unitPrice = priceQuery.value(0).toDouble();
+        }
     }
 
     // 2. Вставляємо позицію замовлення

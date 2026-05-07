@@ -77,6 +77,14 @@ set(PROJECT_SOURCES
         src/ui/EmployeesTab.h
         src/ui/ServicesTab.cpp
         src/ui/ServicesTab.h
+        src/ui/OrderStatusDelegate.cpp
+        src/ui/OrderStatusDelegate.h
+        src/ui/OrdersTab.cpp
+        src/ui/OrdersTab.h
+        src/ui/OrderDialog.cpp
+        src/ui/OrderDialog.h
+        src/ui/OrderItemDialog.cpp
+        src/ui/OrderItemDialog.h
 )
 
 include_directories(src/models src/repositories src/managers src/ui)
