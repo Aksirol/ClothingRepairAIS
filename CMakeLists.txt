@@ -85,6 +85,8 @@ set(PROJECT_SOURCES
         src/ui/OrderDialog.h
         src/ui/OrderItemDialog.cpp
         src/ui/OrderItemDialog.h
+        src/ui/ReportsTab.cpp
+        src/ui/ReportsTab.h
 )
 
 include_directories(src/models src/repositories src/managers src/ui)

@@ -4,7 +4,6 @@
 #include "OrderManager.h"
 #include "OrderDialog.h"
 #include "OrderRepository.h"
-#include "OrderRepository.h"
 #include "OrderItemRepository.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>

@@ -3,6 +3,7 @@
 #include "ClientsTab.h"
 #include "ServicesTab.h"
 #include "OrdersTab.h"
+#include "ReportsTab.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -90,7 +91,8 @@ void MainWindow::createPages() {
     stackedWidget->addWidget(new ReferencesTab(this));
 
     // 4. Звіти (Поки що залишаємо заглушку)
-    stackedWidget->addWidget(createDummyPage("Звіти та Аналітика"));
+    ReportsTab *reportsTab = new ReportsTab(this);
+    stackedWidget->addWidget(reportsTab);
 }
 
 QWidget* MainWindow::createDummyPage(const QString& title) {

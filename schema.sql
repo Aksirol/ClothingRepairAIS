@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS order_items (
 -- ==========================================
 
 -- Встановлюємо початкову версію бази
-INSERT INTO db_version (version) VALUES (1);
+INSERT INTO db_version (version) VALUES (2);
 
 -- Базові статуси (Життєвий цикл: Прийнято -> В роботі -> Готово -> Видано / Скасовано)
 INSERT INTO order_statuses (status_name, color_code, is_system) VALUES
