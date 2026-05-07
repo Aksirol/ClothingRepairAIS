@@ -225,13 +225,69 @@ void OrderDialog::onAddClientClicked() {
 
 Order OrderDialog::getOrderData() const {
     Order order;
+    order.id = currentOrderId;          // Беремо з пам'яті
+    order.statusId = currentStatusId;   // Беремо з пам'яті
+
     order.clientId = clientCombo->currentData().toInt();
     order.employeeId = employeeCombo->currentData().toInt();
-    order.statusId = StatusId::Accepted; // Завжди "Прийнято" при створенні
     order.receivedDate = receivedDateEdit->date();
     order.requiredDate = requiredDateEdit->date();
     order.depositAmount = depositSpin->value();
-    order.paymentStatus = (order.depositAmount > 0) ? "Частково" : "Неоплачено";
+
+    // Розумний перерахунок оплати (не скидаємо "Оплачено")
+    order.paymentStatus = currentPaymentStatus;
+    if (order.paymentStatus != "Оплачено") {
+        order.paymentStatus = (order.depositAmount > 0) ? "Частково" : "Неоплачено";
+    }
+
     order.notes = notesEdit->toPlainText().trimmed();
     return order;
+}
+
+void OrderDialog::setOrderData(const Order& order, const std::vector<OrderItem>& items) {
+    currentOrderId = order.id;
+    currentStatusId = order.statusId;
+    currentPaymentStatus = order.paymentStatus;
+
+    setWindowTitle("Редагування замовлення #" + QString::number(order.id));
+
+    // Відновлюємо комбо-бокси
+    int clientIdx = clientCombo->findData(order.clientId);
+    if (clientIdx >= 0) clientCombo->setCurrentIndex(clientIdx);
+
+    int empIdx = employeeCombo->findData(order.employeeId);
+    if (empIdx >= 0) employeeCombo->setCurrentIndex(empIdx);
+
+    receivedDateEdit->setDate(order.receivedDate);
+    requiredDateEdit->setDate(order.requiredDate);
+    depositSpin->setValue(order.depositAmount);
+    notesEdit->setPlainText(order.notes);
+
+    // Очищаємо таблицю позицій перед заповненням
+    itemsModel->removeRows(0, itemsModel->rowCount());
+
+    // Заповнюємо позиції
+    for (const auto& item : items) {
+        // Отримуємо назву послуги з БД (щоб красиво відобразити в таблиці)
+        QString serviceName = "Невідома послуга";
+        QSqlQuery q;
+        q.prepare("SELECT service_name FROM repair_services WHERE service_id = :id");
+        q.bindValue(":id", item.serviceId);
+        if (q.exec() && q.next()) {
+            serviceName = q.value(0).toString();
+        }
+
+        double sum = item.quantity * item.unitPrice;
+
+        QList<QStandardItem *> rowItems;
+        rowItems << new QStandardItem(QString::number(item.serviceId));
+        rowItems << new QStandardItem(serviceName);
+        rowItems << new QStandardItem(item.clothingDescription);
+        rowItems << new QStandardItem(QString::number(item.quantity));
+        rowItems << new QStandardItem(QString::number(item.unitPrice, 'f', 2));
+        rowItems << new QStandardItem(QString::number(sum, 'f', 2));
+
+        itemsModel->appendRow(rowItems);
+    }
+    calculateTotal();
 }

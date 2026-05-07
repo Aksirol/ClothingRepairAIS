@@ -19,6 +19,8 @@ public:
     explicit OrderDialog(QWidget *parent = nullptr);
     std::vector<OrderItem> getOrderItemsData() const;
 
+    void setOrderData(const Order& order, const std::vector<OrderItem>& items);
+
     // Метод для отримання заповненої структури замовлення
     Order getOrderData() const;
 
@@ -33,6 +35,10 @@ private:
     void populateClients();
     void populateEmployees();
     void calculateTotal();
+
+    int currentOrderId = -1;
+    int currentStatusId = 1; // За замовчуванням StatusId::Accepted
+    QString currentPaymentStatus = "Неоплачено";
 
     QComboBox *clientCombo;
     QPushButton *btnAddClient;

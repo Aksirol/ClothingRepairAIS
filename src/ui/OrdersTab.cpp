@@ -4,6 +4,8 @@
 #include "OrderManager.h"
 #include "OrderDialog.h"
 #include "OrderRepository.h"
+#include "OrderRepository.h"
+#include "OrderItemRepository.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -183,7 +185,51 @@ void OrdersTab::onAddOrderClicked() {
 }
 
 void OrdersTab::onEditOrderClicked() {
-    QMessageBox::information(this, "Фаза 7.3", "Тут буде редагування замовлення та додавання позицій.");
+    QModelIndex proxyIndex = tableView->currentIndex();
+    if (!proxyIndex.isValid()) {
+        QMessageBox::warning(this, "Увага", "Виберіть замовлення для редагування.");
+        return;
+    }
+
+    int row = proxyModel->mapToSource(proxyIndex).row();
+    int orderId = model->index(row, 0).data().toInt();
+
+    // Дістаємо дані з бази
+    OrderRepository orderRepo;
+    OrderItemRepository itemRepo;
+
+    auto orderOpt = orderRepo.getById(orderId);
+    if (!orderOpt) {
+        QMessageBox::critical(this, "Помилка", "Замовлення не знайдено в базі!");
+        return;
+    }
+    auto items = itemRepo.getAllByOrderId(orderId);
+
+    // Відкриваємо діалог і передаємо йому дані
+    OrderDialog dialog(this);
+    dialog.setOrderData(*orderOpt, items);
+
+    if (dialog.exec() == QDialog::Accepted) {
+        Order updatedOrder = dialog.getOrderData();
+        std::vector<OrderItem> updatedItems = dialog.getOrderItemsData();
+
+        if (updatedOrder.clientId <= 0 || updatedOrder.employeeId <= 0) {
+            QMessageBox::warning(this, "Помилка", "Необхідно вибрати клієнта та майстра!");
+            return;
+        }
+        if (updatedItems.empty()) {
+            QMessageBox::warning(this, "Помилка", "Замовлення повинно містити хоча б одну послугу!");
+            return;
+        }
+
+        OrderManager om;
+        if (om.updateOrderWithItems(updatedOrder, updatedItems)) {
+            refreshData();
+            QMessageBox::information(this, "Успіх", "Замовлення успішно оновлено!");
+        } else {
+            QMessageBox::critical(this, "Помилка", "Не вдалося оновити замовлення. Транзакцію відхилено.");
+        }
+    }
 }
 
 void OrdersTab::onDeleteOrderClicked() {

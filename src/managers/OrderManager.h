@@ -19,6 +19,8 @@ public:
     // Оновлення статусу оплати
     bool updatePaymentStatus(int orderId, const QString& paymentStatus);
 
+    bool updateOrderWithItems(const Order& order, std::vector<OrderItem>& items);
+
 private:
     OrderRepository orderRepo;
     OrderItemRepository itemRepo;

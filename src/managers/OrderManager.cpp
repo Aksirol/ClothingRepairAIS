@@ -64,3 +64,40 @@ bool OrderManager::updatePaymentStatus(int orderId, const QString& paymentStatus
     
     return orderRepo.update(order);
 }
+
+bool OrderManager::updateOrderWithItems(const Order& order, std::vector<OrderItem>& items) {
+    if (items.empty()) {
+        qWarning() << "Помилка: Замовлення повинно містити хоча б одну позицію.";
+        return false;
+    }
+
+    QSqlDatabase db = QSqlDatabase::database();
+    if (!db.transaction()) { return false; }
+
+    // 1. Оновлюємо "шапку" замовлення
+    if (!orderRepo.update(order)) {
+        db.rollback();
+        return false;
+    }
+
+    // 2. Видаляємо старі позиції (найчистіший підхід до синхронізації колекцій)
+    QSqlQuery delQuery;
+    delQuery.prepare("DELETE FROM order_items WHERE order_id = :id");
+    delQuery.bindValue(":id", order.id);
+    if (!delQuery.exec()) {
+        db.rollback();
+        return false;
+    }
+
+    // 3. Вставляємо нові/відредаговані позиції
+    for (auto& item : items) {
+        item.orderId = order.id;
+        item.id = -1; // Скидаємо ID, щоб база згенерувала нові
+        if (!itemRepo.insert(item)) {
+            db.rollback();
+            return false;
+        }
+    }
+
+    return db.commit();
+}
