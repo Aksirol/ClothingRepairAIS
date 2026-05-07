@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ReferencesTab.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -73,29 +74,33 @@ void MainWindow::setupUi() {
 }
 
 void MainWindow::createPages() {
-    // Назви для наших заглушок
-    QStringList pageTitles = {
-        "Управління замовленнями", 
-        "База клієнтів", 
-        "Каталог послуг", 
-        "Довідники (Посади, Статуси, Працівники)", 
-        "Звіти та Аналітика"
-    };
+    // 0. Замовлення (Заглушка)
+    stackedWidget->addWidget(createDummyPage("Управління замовленнями"));
 
-    // Створюємо 5 порожніх сторінок
-    for (const QString& title : pageTitles) {
-        QWidget *page = new QWidget();
-        QVBoxLayout *layout = new QVBoxLayout(page);
-        
-        QLabel *label = new QLabel(title, page);
-        QFont font = label->font();
-        font.setPointSize(24);
-        font.setBold(true);
-        label->setFont(font);
-        label->setAlignment(Qt::AlignCenter); // Центруємо текст
-        label->setStyleSheet("color: #666666;"); // Робимо текст сірим
-        
-        layout->addWidget(label);
-        stackedWidget->addWidget(page); // Додаємо сторінку до "стопки"
-    }
+    // 1. Клієнти (Заглушка)
+    stackedWidget->addWidget(createDummyPage("База клієнтів"));
+
+    // 2. Послуги (Заглушка)
+    stackedWidget->addWidget(createDummyPage("Каталог послуг"));
+
+    // 3. Довідники (Контейнер з вкладками)
+    ReferencesTab *referencesTab = new ReferencesTab(this);
+    stackedWidget->addWidget(referencesTab);
+
+    // 4. Звіти (Заглушка)
+    stackedWidget->addWidget(createDummyPage("Звіти та Аналітика"));
+}
+
+QWidget* MainWindow::createDummyPage(const QString& title) {
+    QWidget *page = new QWidget();
+    QVBoxLayout *layout = new QVBoxLayout(page);
+    QLabel *label = new QLabel(title, page);
+    QFont font = label->font();
+    font.setPointSize(24);
+    font.setBold(true);
+    label->setFont(font);
+    label->setAlignment(Qt::AlignCenter);
+    label->setStyleSheet("color: #666666;");
+    layout->addWidget(label);
+    return page;
 }

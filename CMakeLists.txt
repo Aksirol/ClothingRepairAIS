@@ -63,6 +63,14 @@ set(PROJECT_SOURCES
         # UI
         src/ui/MainWindow.cpp
         src/ui/MainWindow.h
+        src/ui/CategoriesTab.cpp
+        src/ui/CategoriesTab.h
+        src/ui/PositionsTab.cpp
+        src/ui/PositionsTab.h
+        src/ui/ReferencesTab.cpp
+        src/ui/ReferencesTab.h
+        src/ui/StatusesTab.cpp
+        src/ui/StatusesTab.h
 )
 
 include_directories(src/models src/repositories src/managers src/ui)

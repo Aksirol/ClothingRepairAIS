@@ -15,6 +15,7 @@ public:
 private:
     void setupUi();      // Метод для налаштування загального вигляду
     void createPages();  // Метод для генерації порожніх заглушок сторінок
+    QWidget *createDummyPage(const QString &title);
 
     QListWidget *sidebar;
     QStackedWidget *stackedWidget;
