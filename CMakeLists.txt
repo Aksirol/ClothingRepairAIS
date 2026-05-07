@@ -59,9 +59,13 @@ set(PROJECT_SOURCES
         src/managers/ClientManager.h
         src/managers/ReportBuilder.cpp
         src/managers/ReportBuilder.h
+
+        # UI
+        src/ui/MainWindow.cpp
+        src/ui/MainWindow.h
 )
 
-include_directories(src/models src/repositories src/managers)
+include_directories(src/models src/repositories src/managers src/ui)
 
 # Створюємо виконувальний файл
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
