@@ -9,6 +9,7 @@
 #include <QDialogButtonBox>
 #include <QRegularExpressionValidator>
 #include <QSqlQuery>
+#include <QShowEvent>
 
 ClientsTab::ClientsTab(QWidget *parent) : QWidget(parent) {
     setupUi();
@@ -96,16 +97,15 @@ void ClientsTab::onAddClicked() {
 
     if (dialog.exec() == QDialog::Accepted) {
         if (lnEdit.text().trimmed().isEmpty() || fnEdit.text().trimmed().isEmpty() || phoneEdit.text().trimmed().isEmpty()) {
-
-            QSqlQuery checkQuery;
-            checkQuery.prepare("SELECT client_id FROM clients WHERE phone = :phone");
-            checkQuery.bindValue(":phone", phoneEdit.text().trimmed());
-            if (checkQuery.exec() && checkQuery.next()) {
-                QMessageBox::warning(this, "Помилка", "Клієнт із таким номером телефону вже існує!");
-                return;
-            }
-
             QMessageBox::warning(this, "Помилка", "Прізвище, Ім'я та Телефон є обов'язковими полями!");
+            return;
+        }
+
+        QSqlQuery checkQuery;
+        checkQuery.prepare("SELECT client_id FROM clients WHERE phone = :phone");
+        checkQuery.bindValue(":phone", phoneEdit.text().trimmed());
+        if (checkQuery.exec() && checkQuery.next()) {
+            QMessageBox::warning(this, "Помилка", "Клієнт із таким номером телефону вже існує!");
             return;
         }
 
@@ -162,18 +162,17 @@ void ClientsTab::onEditClicked() {
 
     if (dialog.exec() == QDialog::Accepted) {
         if (lnEdit.text().trimmed().isEmpty() || fnEdit.text().trimmed().isEmpty() || phoneEdit.text().trimmed().isEmpty()) {
-
-            int currentId = model->data(model->index(row, 0)).toInt();
-            QSqlQuery checkQuery;
-            checkQuery.prepare("SELECT client_id FROM clients WHERE phone = :phone AND client_id != :id");
-            checkQuery.bindValue(":phone", phoneEdit.text().trimmed());
-            checkQuery.bindValue(":id", currentId);
-            if (checkQuery.exec() && checkQuery.next()) {
-                QMessageBox::warning(this, "Помилка", "Інший клієнт вже використовує цей номер телефону!");
-                return;
-            }
-
             QMessageBox::warning(this, "Помилка", "Прізвище, Ім'я та Телефон є обов'язковими полями!");
+            return;
+        }
+
+        int currentId = model->data(model->index(row, 0)).toInt();
+        QSqlQuery checkQuery;
+        checkQuery.prepare("SELECT client_id FROM clients WHERE phone = :phone AND client_id != :id");
+        checkQuery.bindValue(":phone", phoneEdit.text().trimmed());
+        checkQuery.bindValue(":id", currentId);
+        if (checkQuery.exec() && checkQuery.next()) {
+            QMessageBox::warning(this, "Помилка", "Інший клієнт вже використовує цей номер телефону!");
             return;
         }
 
@@ -206,4 +205,9 @@ void ClientsTab::onDeleteClicked() {
 
 void ClientsTab::onSearchTextChanged(const QString &text) {
     proxyModel->setFilterRegularExpression(text);
+}
+
+void ClientsTab::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    model->select(); // Оновлюємо дані при кожному відкритті вкладки
 }

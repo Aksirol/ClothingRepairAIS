@@ -8,6 +8,7 @@
 #include <QFormLayout>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
+#include <QShowEvent>
 
 PositionsTab::PositionsTab(QWidget *parent) : QWidget(parent) {
     setupUi();
@@ -158,4 +159,9 @@ void PositionsTab::onDeleteClicked() {
 
 void PositionsTab::onSearchTextChanged(const QString &text) {
     proxyModel->setFilterRegularExpression(text);
+}
+
+void PositionsTab::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    model->select(); // Оновлює дані з бази
 }

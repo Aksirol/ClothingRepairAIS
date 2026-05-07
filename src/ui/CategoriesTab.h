@@ -3,8 +3,6 @@
 
 #include <QWidget>
 #include <QTableView>
-#include <QPushButton>
-#include <QLineEdit>
 #include <QSqlTableModel>
 #include <QSortFilterProxyModel>
 
@@ -13,6 +11,9 @@ class CategoriesTab : public QWidget {
 
 public:
     explicit CategoriesTab(QWidget *parent = nullptr);
+
+protected:
+    void showEvent(QShowEvent *event) override; // Додано для оновлення при відкритті
 
 private slots:
     void onAddClicked();
@@ -25,11 +26,6 @@ private:
     void setupModel();
 
     QTableView *tableView;
-    QPushButton *btnAdd;
-    QPushButton *btnEdit;
-    QPushButton *btnDelete;
-    QLineEdit *searchEdit;
-
     QSqlTableModel *model;
     QSortFilterProxyModel *proxyModel;
 };

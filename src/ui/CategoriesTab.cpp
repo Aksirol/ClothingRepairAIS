@@ -4,7 +4,10 @@
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QSqlError>
-#include <QInputDialog> // Використовуємо просте діалогове вікно замість створення окремого класу
+#include <QInputDialog>
+#include <QPushButton> // Перенесли з .h
+#include <QLineEdit>   // Перенесли з .h
+#include <QShowEvent>  // Для showEvent
 
 CategoriesTab::CategoriesTab(QWidget *parent) : QWidget(parent) {
     setupUi();
@@ -16,11 +19,12 @@ void CategoriesTab::setupUi() {
 
     // Панель інструментів (кнопки та пошук)
     QHBoxLayout *toolbarLayout = new QHBoxLayout();
-    
-    btnAdd = new QPushButton("Додати", this);
-    btnEdit = new QPushButton("Редагувати", this);
-    btnDelete = new QPushButton("Видалити", this);
-    searchEdit = new QLineEdit(this);
+
+    // ОГОЛОШУЄМО ЛОКАЛЬНО: додано типи QPushButton* та QLineEdit*
+    QPushButton *btnAdd = new QPushButton("Додати", this);
+    QPushButton *btnEdit = new QPushButton("Редагувати", this);
+    QPushButton *btnDelete = new QPushButton("Видалити", this);
+    QLineEdit *searchEdit = new QLineEdit(this);
     searchEdit->setPlaceholderText("Пошук категорії...");
 
     toolbarLayout->addWidget(btnAdd);
@@ -33,10 +37,10 @@ void CategoriesTab::setupUi() {
 
     // Таблиця
     tableView = new QTableView(this);
-    tableView->setSelectionBehavior(QAbstractItemView::SelectRows); // Виділяємо цілі рядки
-    tableView->setSelectionMode(QAbstractItemView::SingleSelection); // Лише один рядок за раз
-    tableView->setSortingEnabled(true); // Дозволяємо сортування по кліку на заголовок
-    tableView->horizontalHeader()->setStretchLastSection(true); // Розтягуємо останню колонку
+    tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+    tableView->setSortingEnabled(true);
+    tableView->horizontalHeader()->setStretchLastSection(true);
 
     mainLayout->addWidget(tableView);
 
@@ -48,24 +52,28 @@ void CategoriesTab::setupUi() {
 }
 
 void CategoriesTab::setupModel() {
-    // Підключаємося до таблиці БД
     model = new QSqlTableModel(this);
     model->setTable("repair_categories");
-    model->setEditStrategy(QSqlTableModel::OnManualSubmit); // Зміни зберігаємо вручну
-    model->select(); // Завантажуємо дані з БД
+    model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    model->select();
 
-    // Змінюємо назви колонок на зрозумілі
     model->setHeaderData(0, Qt::Horizontal, "ID");
     model->setHeaderData(1, Qt::Horizontal, "Назва категорії");
 
-    // Налаштовуємо проксі-модель для пошуку та сортування
     proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(model);
-    proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive); // Пошук незалежний від регістру
-    proxyModel->setFilterKeyColumn(1); // Шукаємо лише в колонці "Назва категорії"
+    proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    proxyModel->setFilterKeyColumn(1);
 
     tableView->setModel(proxyModel);
-    tableView->hideColumn(0); // Ховаємо колонку ID, користувачу вона не потрібна
+    tableView->hideColumn(0);
+}
+
+void CategoriesTab::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    if (model) {
+        model->select(); // Автоматичне оновлення даних при перемиканні на вкладку
+    }
 }
 
 void CategoriesTab::onAddClicked() {
@@ -73,13 +81,11 @@ void CategoriesTab::onAddClicked() {
     QString newName = QInputDialog::getText(this, "Додати категорію",
                                             "Назва нової категорії:", QLineEdit::Normal,
                                             "", &ok);
-    
-    // Якщо користувач натиснув "ОК"
+
     if (ok) {
-        // Перевіряємо, чи поле не порожнє
         if (newName.trimmed().isEmpty()) {
             QMessageBox::warning(this, "Увага", "Назва категорії не може бути порожньою!");
-            return; // Зупиняємо виконання
+            return;
         }
 
         int row = model->rowCount();
@@ -90,7 +96,7 @@ void CategoriesTab::onAddClicked() {
             QMessageBox::critical(this, "Помилка", "Не вдалося зберегти:\n" + model->lastError().text());
             model->revertAll();
         } else {
-            model->select(); // Оновлюємо дані
+            model->select();
         }
     }
 }
@@ -111,15 +117,12 @@ void CategoriesTab::onEditClicked() {
                                             "Нова назва:", QLineEdit::Normal,
                                             currentName, &ok);
 
-    // Якщо користувач натиснув "ОК"
     if (ok) {
-        // Перевіряємо на порожнечу
         if (newName.trimmed().isEmpty()) {
             QMessageBox::warning(this, "Увага", "Назва категорії не може бути порожньою!");
             return;
         }
 
-        // Зберігаємо, лише якщо назва дійсно змінилася
         if (newName != currentName) {
             model->setData(model->index(row, 1), newName.trimmed());
             if (!model->submitAll()) {
@@ -137,17 +140,15 @@ void CategoriesTab::onDeleteClicked() {
         return;
     }
 
-    // Підтвердження видалення
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Підтвердження", "Ви впевнені, що хочете видалити цю категорію?",
                                   QMessageBox::Yes | QMessageBox::No);
-    
+
     if (reply == QMessageBox::Yes) {
         QModelIndex sourceIndex = proxyModel->mapToSource(proxyIndex);
         model->removeRow(sourceIndex.row());
-        
+
         if (!model->submitAll()) {
-            // Тут спрацює наш FOREIGN KEY захист, якщо до категорії прив'язані послуги
             QMessageBox::critical(this, "Помилка", "Неможливо видалити категорію. Можливо, до неї вже прив'язані послуги.");
             model->revertAll();
         } else {
@@ -157,6 +158,5 @@ void CategoriesTab::onDeleteClicked() {
 }
 
 void CategoriesTab::onSearchTextChanged(const QString &text) {
-    // Встановлюємо фільтр для проксі-моделі на основі введеного тексту
     proxyModel->setFilterRegularExpression(text);
 }

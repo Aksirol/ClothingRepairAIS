@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "ReferencesTab.h"
 #include "ClientsTab.h"
+#include "ServicesTab.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
@@ -78,7 +79,9 @@ void MainWindow::createPages() {
     // 0. Замовлення (Заглушка)
     stackedWidget->addWidget(createDummyPage("Управління замовленнями"));
 
-    
+    ServicesTab *servicesTab = new ServicesTab(this);
+    stackedWidget->addWidget(servicesTab);
+
     stackedWidget->addWidget(new ClientsTab(this));
 
     // 2. Послуги (Заглушка)

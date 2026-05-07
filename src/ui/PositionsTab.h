@@ -12,6 +12,10 @@ class PositionsTab : public QWidget {
     Q_OBJECT
 public:
     explicit PositionsTab(QWidget *parent = nullptr);
+
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private slots:
     void onAddClicked();
     void onEditClicked();

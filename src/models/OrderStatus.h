@@ -6,7 +6,8 @@
 struct OrderStatus {
     int id = -1;
     QString name;
-    QString colorCode; // У форматі "#RRGGBB"
+    QString colorCode;
+    bool isSystem = false; // Додано
 };
 
 #endif

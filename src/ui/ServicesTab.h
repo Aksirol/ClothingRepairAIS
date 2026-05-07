@@ -1,36 +1,30 @@
-#ifndef STATUSESTAB_H
-#define STATUSESTAB_H
+#ifndef SERVICESTAB_H
+#define SERVICESTAB_H
 
 #include <QWidget>
 #include <QTableView>
-#include <QPushButton>
-#include <QLineEdit>
-#include <QSqlTableModel>
+#include <QSqlRelationalTableModel>
 #include <QSortFilterProxyModel>
 
-class StatusesTab : public QWidget {
+class ServicesTab : public QWidget {
     Q_OBJECT
-
 public:
-    explicit StatusesTab(QWidget *parent = nullptr);
-
+    explicit ServicesTab(QWidget *parent = nullptr);
 protected:
-    // Додаємо перехоплення події показу вікна
     void showEvent(QShowEvent *event) override;
-
 private slots:
     void onAddClicked();
     void onEditClicked();
     void onDeleteClicked();
     void onSearchTextChanged(const QString &text);
-
 private:
     void setupUi();
     void setupModel();
+    void populateCategoriesCombo(class QComboBox *combo);
 
     QTableView *tableView;
-    QSqlTableModel *model;
+    QSqlRelationalTableModel *model;
     QSortFilterProxyModel *proxyModel;
 };
 
-#endif // STATUSESTAB_H
+#endif

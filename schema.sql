@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS clients (
 CREATE TABLE IF NOT EXISTS order_statuses (
                                               status_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                               status_name TEXT NOT NULL,
-                                              color_code TEXT
+                                              color_code TEXT,
+                                              is_system INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS repair_categories (
@@ -97,12 +98,12 @@ CREATE TABLE IF NOT EXISTS order_items (
 INSERT INTO db_version (version) VALUES (1);
 
 -- Базові статуси (Життєвий цикл: Прийнято -> В роботі -> Готово -> Видано / Скасовано)
-INSERT INTO order_statuses (status_name, color_code) VALUES
-                                                         ('Прийнято', '#FFA500'),
-                                                         ('В роботі', '#1E90FF'),
-                                                         ('Готово', '#32CD32'),
-                                                         ('Видано', '#808080'),
-                                                         ('Скасовано', '#FF0000');
+INSERT INTO order_statuses (status_name, color_code, is_system) VALUES
+                                                                    ('Прийнято', '#FFA500', 1),
+                                                                    ('В роботі', '#1E90FF', 1),
+                                                                    ('Готово', '#32CD32', 1),
+                                                                    ('Видано', '#808080', 1),
+                                                                    ('Скасовано', '#FF0000', 1);
 
 -- Базові посади
 INSERT INTO positions (position_name, hourly_rate) VALUES

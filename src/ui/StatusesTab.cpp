@@ -7,6 +7,7 @@
 #include <QDialog>
 #include <QFormLayout>
 #include <QDialogButtonBox>
+#include <QShowEvent> // Обов'язково підключаємо цей клас
 
 StatusesTab::StatusesTab(QWidget *parent) : QWidget(parent) {
     setupUi();
@@ -18,7 +19,7 @@ void StatusesTab::setupUi() {
 
     // Панель інструментів
     QHBoxLayout *toolbarLayout = new QHBoxLayout();
-    
+
     QPushButton *btnAdd = new QPushButton("Додати", this);
     QPushButton *btnEdit = new QPushButton("Редагувати", this);
     QPushButton *btnDelete = new QPushButton("Видалити", this);
@@ -59,6 +60,7 @@ void StatusesTab::setupModel() {
     model->setHeaderData(0, Qt::Horizontal, "ID");
     model->setHeaderData(1, Qt::Horizontal, "Назва статусу");
     model->setHeaderData(2, Qt::Horizontal, "HEX Колір");
+    model->setHeaderData(3, Qt::Horizontal, "Системний"); // Додаємо заголовок для нового поля
 
     proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(model);
@@ -67,6 +69,13 @@ void StatusesTab::setupModel() {
 
     tableView->setModel(proxyModel);
     tableView->hideColumn(0); // Ховаємо ID
+    tableView->hideColumn(3); // Ховаємо колонку is_system від користувача
+}
+
+// Реалізація оновлення даних при відкритті вкладки
+void StatusesTab::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    model->select();
 }
 
 void StatusesTab::onAddClicked() {
@@ -96,6 +105,7 @@ void StatusesTab::onAddClicked() {
         model->insertRow(row);
         model->setData(model->index(row, 1), nameEdit.text().trimmed());
         model->setData(model->index(row, 2), colorEdit.text().trimmed());
+        model->setData(model->index(row, 3), 0); // Нові статуси не є системними
         
         if (!model->submitAll()) {
             QMessageBox::critical(this, "Помилка", "Не вдалося зберегти:\n" + model->lastError().text());
@@ -154,17 +164,13 @@ void StatusesTab::onEditClicked() {
 
 void StatusesTab::onDeleteClicked() {
     QModelIndex proxyIndex = tableView->currentIndex();
-    if (!proxyIndex.isValid()) {
-        QMessageBox::warning(this, "Увага", "Виберіть статус для видалення.");
-        return;
-    }
+    if (!proxyIndex.isValid()) return;
 
-    // Додаткова перевірка: заборонимо видаляти системні статуси (ID 1-5)
     int row = proxyModel->mapToSource(proxyIndex).row();
-    int statusId = model->data(model->index(row, 0)).toInt();
-    
-    if (statusId >= 1 && statusId <= 5) {
-        QMessageBox::warning(this, "Заборонено", "Видалення базових системних статусів (Прийнято, В роботі, Готово, Видано, Скасовано) заборонено бізнес-логікою.");
+    bool isSystem = model->index(row, 3).data().toBool(); // Стовпець is_system
+
+    if (isSystem) {
+        QMessageBox::warning(this, "Заборонено", "Видалення системних статусів заборонено.");
         return;
     }
 

@@ -75,6 +75,8 @@ set(PROJECT_SOURCES
         src/ui/ClientsTab.h
         src/ui/EmployeesTab.cpp
         src/ui/EmployeesTab.h
+        src/ui/ServicesTab.cpp
+        src/ui/ServicesTab.h
 )
 
 include_directories(src/models src/repositories src/managers src/ui)

@@ -13,6 +13,9 @@ class ClientsTab : public QWidget {
 public:
     explicit ClientsTab(QWidget *parent = nullptr);
 
+protected:
+    void showEvent(QShowEvent *event) override; // <-- ДОДАНО ПЕРЕХОПЛЕННЯ ПОДІЇ
+
 private slots:
     void onAddClicked();
     void onEditClicked();
